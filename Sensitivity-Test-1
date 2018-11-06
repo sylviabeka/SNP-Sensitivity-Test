@@ -1,0 +1,138 @@
+#Import the following python functions:
+from numpy import *
+from scipy.stats import chi2
+from Bio.Seq import Seq
+from Bio import SeqIO
+from decimal import Decimal
+import re, itertools, numpy as np, scipy as sp, random, math
+
+#Create instances, strings and lists, for appending data and calculation:
+duplet_list=[], triplet_list = [],raw_sequence='', , transition_freq = [] . . . . . . . . . etc
+
+#define functions:
+
+#function generating duplets to evaluate markov first order dependency 
+def dups(lst):
+  for i in range(1, len(lst)): 
+    yield lst[i-1], lst[i]
+
+#function generating triplets to evaluate markov second order dependency
+def trips(lst):
+  for i in range(1, len(lst)-1):
+    yield lst[i-1], lst[i], lst[i+1]
+
+#call regulatory sequences in fasta format from sequence files:
+for seq_record in SeqIO.parse("TFBS-SEQ1SEPT2014.fasta", "fasta"):
+sequence = seq_record.seq
+sequence_list = list(sequence)
+
+#print sequence_list
+print seq_record.id
+MAXI_ABSI_DIFF_list.append( seq_record.id) # appends SNP-ID to final result 
+SIGN_OF_list.append(seq_record.id) # appends SNP-ID to final result
+
+#extract upflank of SNP [0-299 /R/M/ 305-605]
+up_flank = sequence_list[0:300] #print up_flank
+
+#extract downflank of SNP [0-299 /R/M/ 305-605]
+down_flank = sequence_list[305:605] #print len(down_flank)
+
+#Extract SNP Alleles from sequence
+SNP_Position_REF = sequence_list[301:302] #print SNP_Position_REF
+SNP_Position_MUT = sequence_list[303:304] #print SNP_Position_MUT
+
+#join both flanks
+join_flanks = up_flank + down_flank 
+#print join_flanks
+#print len (join_flanks)
+
+#Create reference allele sequence
+ORI_sequence_REF = join_flanks[0:300] + SNP_Position_REF + join_flanks[300:600] 
+#print ORI_sequence_REF[298:303]
+#print len(ORI_sequence_REF)
+
+#Create mutant allele sequence
+ORI_sequence_MUT = join_flanks[0:300] + SNP_Position_MUT + join_flanks[300:600] 
+#print ORI_sequence_MUT[298:303]
+#print len(ORI_sequence_MUT)
+sequence_tot = len(ORI_sequence_REF)
+
+#Compute 0 order Markov scores
+nucleotide_freq_ref = [ORI_sequence_REF.count('A'),ORI_sequence_REF.count('C'), 
+....ORI_sequence_REF.count('G'), ORI_sequence_REF.count('T')] 
+nucleotide_freq1_ref = [float(i) for i in nucleotide_freq_ref]
+nucleotide_prob_ref = [i/float(sequence_tot) for i in nucleotide_freq1_ref] 
+nucleotide_prob_ref = [round(i,4) for i in nucleotide_prob_ref]
+
+#Create 0 order Markov score dictionary
+nucleotides = ['A', 'C', 'G', 'T']
+markov0_dict = dict(zip(nucleotides, nucleotide_prob_ref))
+
+#Generate overlapping trimers from regulatory sequence using a sliding window method 
+# SNP POSITION IS 300
+# First triplet; [XXX]XXXX(XSX)XXXXXXX
+SNP_SUR_MOTIF1 = ORI_sequence_REF[292:295]
+#print SNP_SUR_MOTIF1
+SNP_SUR_MOTIF1_obs = "".join(str(x) for x in SNP_SUR_MOTIF1) 
+#print SNP_SUR_MOTIF1_obs
+
+# Second triplet; X[XXX]XXX(XSX)XXXXXXX
+SNP_SUR_MOTIF2 = ORI_sequence_REF[293:296]
+#print SNP_SUR_MOTIF2
+SNP_SUR_MOTIF2_obs = "".join(str(x) for x in SNP_SUR_MOTIF2) 
+#print SNP_SUR_MOTIF2_obs
+
+# Twelveth triplet; XXXXXXX(XSX)XXX[XXX]X
+SNP_SUR_MOTIF14 = ORI_sequence_REF[305:308]
+#print SNP_SUR_MOTIF14
+SNP_SUR_MOTIF14_obs = "".join(str(x) for x in SNP_SUR_MOTIF14) 
+#print SNP_SUR_MOTIF14_obs
+
+# Thirtheenth triplet; XXXXXXX(XSX)XXXX[XXX]
+SNP_SUR_MOTIF15 = ORI_sequence_REF[306:309]
+#print SNP_SUR_MOTIF15
+SNP_SUR_MOTIF15_obs = "".join(str(x) for x in SNP_SUR_MOTIF15) 
+#print SNP_SUR_MOTIF15_obs
+
+# Compute Expected probabilities of Trimers in the SNP environment (in this case, Markov Order = 1) 
+# First triplet
+prob_motif1 = markov0_dict[SNP_SUR_MOTIF1[0]] * markov0_dict[SNP_SUR_MOTIF1[1]] * markov0_dict[SNP_SUR_MOTIF1[2]] 
+obs_win_1 = markov2_obs_dict[SNP_SUR_MOTIF1_obs]
+# append computed scores to a list
+expected_probs_ref_coll.append(prob_motif1) 
+observed_probs_ref_coll.append(obs_win_1)
+
+# Second triplet
+prob_motif2 = markov0_dict[SNP_SUR_MOTIF2[0]] * markov0_dict[SNP_SUR_MOTIF2[1]] * markov0_dict[SNP_SUR_MOTIF2[2]] 
+obs_win_2 = markov2_obs_dict[SNP_SUR_MOTIF2_obs] 
+expected_probs_ref_coll.append(prob_motif2) 
+observed_probs_ref_coll.append(obs_win_2)
+
+# Twelveth triplet
+prob_motif14 = markov0_dict[SNP_SUR_MOTIF14[0]] * markov0_dict[SNP_SUR_MOTIF14[1]] * markov0_dict[SNP_SUR_MOTIF14[2]] 
+obs_win_14 = markov2_obs_dict[SNP_SUR_MOTIF14_obs] 
+expected_probs_ref_coll.append(prob_motif14) 
+observed_probs_ref_coll.append(obs_win_14)
+
+# Thirteenh triplet
+prob_motif15 = markov0_dict[SNP_SUR_MOTIF15[0]] * markov0_dict[SNP_SUR_MOTIF15[1]] * markov0_dict[SNP_SUR_MOTIF15[2]] 
+obs_win_15 = markov2_obs_dict[SNP_SUR_MOTIF15_obs] 
+expected_probs_ref_coll.append(prob_motif15) 
+observed_probs_ref_coll.append(obs_win_15)
+
+##compute SR = (O - E)/ Sqrt (E) ...convert probs to frequencies *599
+expected_probs_ref_coll_1 = array(expected_probs_ref_coll)
+observed_probs_ref_coll_1 = array(observed_probs_ref_coll)
+O_subtract_E_ref = observed_probs_ref_coll_1 - expected_probs_ref_coll_1 
+expected_probs_ref_coll_1_sqrt = np.sqrt(expected_probs_ref_coll_1) 
+O_subtract_E_over_sqrtE_ref = O_subtract_E_ref/expected_probs_ref_coll_1_sqrt
+
+#Repeat same as above for Mutant allele Sequence
+
+#Compute Dmax (MAX (ABS (REF-MUT)))
+REF_minus_MUT = O_subtract_E_over_sqrtE_ref - O_subtract_E_over_sqrtE_mut 
+Absi_REF_minus_MUT = abs(REF_minus_MUT)
+# Value of Dmax
+MAXI_ABSI_DIFF = max(Absi_REF_minus_MUT)
+# To know original sign -/+ of Dmax
+SIGN_OF = MAXI_DIFF == MAXI_ABSI_DIFF 
